@@ -6,23 +6,38 @@ using System.Threading.Tasks;
 
 namespace ForteDigital_BackendTask
 {
+    /*
+       id: integer,
+       age: integer,
+       name: string,
+       email: string,
+       internshipStart: date with time,
+       internshipEnd: date with time.
+    */
+
     internal class InternClass
     {
-        /*
-                id: integer,
-                age: integer,
-                name: string,
-                email: string,
-                internshipStart: date with time,
-                internshipEnd: date with time.
-         */
+        public int Id { get; private set; }
+        public string Name { get; private set; }
+        public int Age { get; private set; }
+        public string Email { get; private set; }
+        public DateTime InternshipStart { get; private set; }
+        public DateTime InternshipEnd { get; private set; }
 
+        public InternClass()
+        {
 
-        public int id { get; set; }
-        public string name { get; set; }
-        public string _age { get; set; }
-        public string _email { get; set; }   //Should be private.
-        public DateTime _internshipStart { get; set; }
-        public DateTime _internshipEnd { get; set; }
+        }
+
+        public InternClass(int id, string name, int age, string email, DateTime internshipStart, DateTime internshipEnd)
+        {
+            Id = id;
+            Name = name;
+            Age = age;
+            Email = email;
+            InternshipStart = internshipStart;
+            InternshipEnd = internshipEnd;
+        }
+
     }
 }
