@@ -1,10 +1,4 @@
 ﻿using LINQtoCSV;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ForteDigital_BackendTask
 {
@@ -42,7 +36,7 @@ namespace ForteDigital_BackendTask
         [CsvColumn(Name = "interns/internshipEnd", FieldIndex = 6, OutputFormat = "yyyy-MM-ddTHH:mm:00Z")]
         public string InternshipEndCSV { get; private set; }
 
-        //LINQ-to-CSV can't recognize date with time zone format so I created another ctor with date in string and it works well.
+        //LINQ-to-CSV can't recognize date with time zone format so I created another ctor with date in string and it works well. (But I'm not sure why.)
 
         public InternClass()
         {

@@ -2,9 +2,6 @@
 using Newtonsoft.Json.Linq;
 using System.Globalization;
 using LINQtoCSV;
-using System.Formats.Asn1;
-using Microsoft.VisualBasic;
-using System.Text.Json.Nodes;
 using System.IO.Compression;
 using System;
 
@@ -14,7 +11,7 @@ class Program
 
     public static void Main(string[] args)
     {
-    #region Instructions
+        #region Instructions
     /* 
         Instructions: 
             1. Count Command
@@ -39,19 +36,95 @@ class Program
      */
     #endregion
 
-    //https://fortedigital.github.io/Back-End-Internship-Task/interns.json
-    //https://fortedigital.github.io/Back-End-Internship-Task/interns.csv
-    //https://fortedigital.github.io/Back-End-Internship-Task/interns.zip
+        //https://fortedigital.github.io/Back-End-Internship-Task/interns.json
+        //https://fortedigital.github.io/Back-End-Internship-Task/interns.csv
+        //https://fortedigital.github.io/Back-End-Internship-Task/interns.zip
 
-        Console.WriteLine("Url: ");
-        string url = Console.ReadLine();
+        //Console.WriteLine("Url: ");
+        //string url = Console.ReadLine();
 
-        ChooseFileFormat(url);
+        //ChooseFileFormat(url);
+
+        int[] ages = new int[] { 1, 2, 3, 12, 23, 34 };
+        int counter = 0;
+
+        //count commands
+        string cmd1 = "json count --age-gt 22";                       //2
+        string cmd2 = "json count --age-lt 22";                       //4
+        string cmd3 = "json count xD";                                //6
+
+        //max-age command
+        string cmd4 = "json max-age";                                 //34
+
+
+        string countCmd = cmd4;
+        
+        if(countCmd.Contains("count"))
+        {
+            if(countCmd.Contains("--age"))
+            {
+                string s = countCmd.Substring(countCmd.IndexOf("--age") + 9);
+                string num = string.Empty;
+                foreach (char x in s)
+                {
+                    if (Char.IsNumber(x))
+                        num += x;
+                    //if (x == '-') break;
+
+                }
+                Console.WriteLine("num: " + num);
+
+
+                if (countCmd.Contains("--age-gt"))
+                {
+                    foreach (int age in ages)
+                    {
+                        if (Convert.ToInt32(num) < age)
+                            counter++;
+                    }
+                }
+
+                else if (countCmd.Contains("--age-lt"))
+                {
+                    foreach (int age in ages)
+                    {
+                        if (Convert.ToInt32(num) > age)
+                            counter++;
+                    }
+                }
+            }
+        
+            else if (!countCmd.Contains("--age"))
+            {
+                foreach(int age in ages)
+                counter++;
+            }
+        }
+
+        else if (countCmd.Contains("max-age"))
+        {
+            counter = ages.Max();
+        }
+
+        else Console.WriteLine("Invalid command.");
+
+
+        //count <url> [ --age-gt | --age-lt age]
+
+        //max-age <url>
+
+
+
+        Console.WriteLine("count: " + counter);
+
+        
+
+        //Todo: use name of a file instead of 'interns', make commends and errors handling
 
         //Thread.Sleep(8000);
     }
 
-    public static async void ChooseFileFormat(string url)
+    public static void ChooseFileFormat(string url)
     {
         if (url is not null)
         {
@@ -60,16 +133,14 @@ class Program
                 switch (url.Substring(url.IndexOf(".", url.Length - 5)))
                 {
                     case ".json":
-                        Console.WriteLine("json");
                         PrintDataJSON(url);
                         break;
 
                     case ".csv":
-                        Console.WriteLine("Csv");
                         PrintDataCSV(url);
                         break;
+
                     case ".zip":
-                        Console.WriteLine("zup");
                         PrintDataCSV(url);
                         break;
                 }
@@ -110,8 +181,6 @@ class Program
 
     private static async Task DownloadFile(string url, string name)
     {
-        var internsList = new List<InternClass>();
-
         byte[] fileBytes = await _httpClient.GetByteArrayAsync(url);
         File.WriteAllBytes(name, fileBytes);
 
