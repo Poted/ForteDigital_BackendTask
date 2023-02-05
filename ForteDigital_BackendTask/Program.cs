@@ -1,15 +1,15 @@
 ﻿using ForteDigital_BackendTask;
-using System;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using Newtonsoft.Json;  //Nuget package for deserializing JSON in .NET;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
-using System.Formats.Tar;
+using LINQtoCSV;
+using System.Formats.Asn1;
+using Microsoft.VisualBasic;
+using System.Text.Json.Nodes;
 
 class Program
 {
+    private static readonly HttpClient _httpClient = new HttpClient();
+
     public static void Main(string[] args)
     {
         /* 
@@ -35,23 +35,73 @@ class Program
                 4:Create class for commands (?)
          */
 
-        GettingData();
 
-        Console.WriteLine("");
+        //foreach (var item in GettingDataJson().Result)
+        //    Console.WriteLine(item.Id + " " + item.Name + " " + item.Age + " " + item.Email + " " + item.InternshipStart + " " + item.InternshipEnd);
+
+
+        foreach(var item in GettingDataCSV())
+        {
+            Console.WriteLine(item.Id + " " + item.Name + " " + item.Age + " " + item.Email + " " + item.InternshipStart + " " + item.InternshipEnd);
+        }
+
+       
+        Thread.Sleep(4000);
+    }
+
+    private static async Task DownloadFile()
+    {
+        string url = @"https://fortedigital.github.io/Back-End-Internship-Task/interns.csv";
+
+        var internsList = new List<InternClass>();
+
+        byte[] fileBytes = await _httpClient.GetByteArrayAsync(url);
+        File.WriteAllBytes("MyCsv.csv", fileBytes);
+    }
+
+    private static List<InternClass> GettingDataCSV()
+    {
+        Task.WaitAll(DownloadFile());
+
+        var internsList = new List<InternClass>();
+
+        var csvFileDescription = new CsvFileDescription
+        {
+            FirstLineHasColumnNames = true,
+            IgnoreUnknownColumns = true,
+            SeparatorChar = ',',
+            UseFieldIndexForReadingData = false
+        };
+
+        var csvContext = new CsvContext();
+        var interns = csvContext.Read<InternClass>("MyCsv.csv", csvFileDescription);
+
+        foreach (var item in interns)
+        {
+            internsList.Add(new InternClass(
+                    item.Id,
+                    item.Name,
+                    item.Age,
+                    item.Email,
+                    DateTime.ParseExact(item.InternshipStartCSV, "yyyy-MM-ddTHH:mm+00Z", new CultureInfo("en-US")).ToUniversalTime(),
+                    DateTime.ParseExact(item.InternshipEndCSV, "yyyy-MM-ddTHH:mm+00Z", new CultureInfo("en-US")).ToUniversalTime()
+                    ));
+        }
+
+        return internsList;
 
     }
 
-    private static void GettingData()
+
+
+    private static async Task<List<InternClass>> GettingDataJson()
     {
         string data = string.Empty;
         var internsList = new List<InternClass>();
 
         //Downloading data.
-        using (WebClient client = new WebClient())
-        {
-            string url = "https://fortedigital.github.io/Back-End-Internship-Task/interns.json";
-            data = client.DownloadString(url);
-        }
+        data = await _httpClient.GetStringAsync(@"https://fortedigital.github.io/Back-End-Internship-Task/interns.json");
+
 
         //Parsing data into objects.
         var JSONData = JObject.Parse(data);
@@ -61,7 +111,6 @@ class Program
         var JSONObjects =
             from p in JSONData["interns"]
             select p;
-        //select (string)p["name"];
 
         //Saving data from JSON into an Intern objects
         foreach (var item in JSONObjects)
@@ -76,9 +125,6 @@ class Program
                     ));
         }
 
-
-
-        foreach (var item in internsList)
-            Console.WriteLine(item.Id + " " + item.Name + " " + item.Age + " " + item.Email + " " + item.InternshipStart + " " + item.InternshipEnd);
+        return internsList;
     }
 }

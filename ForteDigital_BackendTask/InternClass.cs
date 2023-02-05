@@ -1,5 +1,7 @@
-﻿using System;
+﻿using LINQtoCSV;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,18 +17,47 @@ namespace ForteDigital_BackendTask
        internshipEnd: date with time.
     */
 
-    internal class InternClass
+    [Serializable]
+    public class InternClass
     {
+        [CsvColumn(Name = "interns/id", FieldIndex = 1)]
         public int Id { get; private set; }
+
+        [CsvColumn(Name = "interns/name", FieldIndex = 3)]
         public string Name { get; private set; }
+
+        [CsvColumn(Name = "interns/age", FieldIndex = 2)]
         public int Age { get; private set; }
+
+        [CsvColumn(Name = "interns/email", FieldIndex = 4)]
         public string Email { get; private set; }
+
         public DateTime InternshipStart { get; private set; }
+
         public DateTime InternshipEnd { get; private set; }
+
+        [CsvColumn(Name = "interns/internshipStart", FieldIndex = 5, OutputFormat = "yyyy-MM-ddTHH:mm:00Z")]
+        public string InternshipStartCSV { get; private set; }
+
+        [CsvColumn(Name = "interns/internshipEnd", FieldIndex = 6, OutputFormat = "yyyy-MM-ddTHH:mm:00Z")]
+        public string InternshipEndCSV { get; private set; }
+
+
+
 
         public InternClass()
         {
 
+        }
+
+        public InternClass(int id, string name, int age, string email, string internshipStart, string internshipEnd)
+        {
+            Id = id;
+            Name = name;
+            Age = age;
+            Email = email;
+            InternshipStartCSV = internshipStart;
+            InternshipEndCSV = internshipEnd;
         }
 
         public InternClass(int id, string name, int age, string email, DateTime internshipStart, DateTime internshipEnd)
