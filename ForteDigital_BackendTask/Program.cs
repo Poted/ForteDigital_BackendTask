@@ -34,19 +34,40 @@ class Program
         string command = Console.ReadLine();
         string url = string.Empty;
 
-        //Taking url from command using regex.
-        var linkParser = new Regex(@"\b(?:https?://|www\.)\S+\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        foreach (Match m in linkParser.Matches(command))
-            url = m.Value;
-
-        //Download data from API.
-        DownloadAPIData(url);
-
-        int counter = 0;
-        
-        if(command.Contains("count"))
+        string s = command.Substring(command.LastIndexOf('/') + 1);
+        string fileName = string.Empty;
+        foreach (char x in s)
         {
-            if(command.Contains("--age"))
+            if (char.IsWhiteSpace(x)) 
+                break;
+            
+            fileName += x;
+        }
+
+
+        if (command is not null)
+        {
+            //Taking url from command using regex.
+            var linkParser = new Regex(@"\b(?:https?://|www\.)\S+\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            foreach (Match m in linkParser.Matches(command))
+                url = m.Value;
+    
+            //Download data from API.
+            DownloadAPIData(url, fileName);
+
+            //Preparing result from command.
+            ageCountAndMaxAge(command);
+
+        }
+    }
+
+    private static void ageCountAndMaxAge(string command)
+    {
+        int result = 0;
+
+        if (command.Contains("count"))
+        {
+            if (command.Contains("--age"))
             {
                 string s = command.Substring(command.IndexOf("--age") + 9);
                 string num = string.Empty;
@@ -61,7 +82,7 @@ class Program
                     foreach (int age in ages)
                     {
                         if (Convert.ToInt32(num) < age)
-                            counter++;
+                            result++;
                     }
                 }
 
@@ -70,31 +91,30 @@ class Program
                     foreach (int age in ages)
                     {
                         if (Convert.ToInt32(num) > age)
-                            counter++;
+                            result++;
                     }
                 }
             }
-        
+
             else if (!command.Contains("--age"))
             {
-                foreach(int age in ages)
-                counter++;
+                foreach (int age in ages)
+                    result++;
             }
         }
 
         else if (command.Contains("max-age"))
         {
-            counter = ages.Max();
+            result = ages.Max();
         }
 
         else Console.WriteLine("Invalid command.");
 
 
-        Console.WriteLine("output: " + counter);
-
+        Console.WriteLine("output: " + result);
     }
 
-    public static void DownloadAPIData(string url)
+    public static void DownloadAPIData(string url, string fileName)
     {
         if (url is not null)
         {
@@ -107,11 +127,11 @@ class Program
                         break;
 
                     case ".csv":
-                        SaveDataCSV(url);
+                        SaveDataCSV(url, fileName);
                         break;
 
                     case ".zip":
-                        SaveDataCSV(url);
+                        SaveDataCSV(url, fileName);
                         break;
                 }
             }
@@ -137,9 +157,10 @@ class Program
             //    item.InternshipEnd);
         }
     }
-    public static void SaveDataCSV(string url)
+
+    public static void SaveDataCSV(string url, string fileName)
     {
-        foreach (var item in GettingDataCSV(url))
+        foreach (var item in GettingDataCSV(url, fileName))
         {
             ages.Add(item.Age);
 
@@ -152,25 +173,44 @@ class Program
         }
     }
 
-    private static async Task DownloadFile(string url, string name)
+    private static async Task DownloadFile(string url, string fileName)
     {
-        byte[] fileBytes = await _httpClient.GetByteArrayAsync(url);
-        File.WriteAllBytes(name, fileBytes);
-
-        if (name.Contains(".zip"))
+        try
         {
-            ZipFile.ExtractToDirectory("./interns.zip", "./");
+            byte[] fileBytes = await _httpClient.GetByteArrayAsync(url);
+             File.WriteAllBytes(fileName, fileBytes);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("download exc msg: " + ex.Message);
+        }
+
+
+        try
+        {
+            if (fileName.Contains(".zip"))
+            {
+                if (File.Exists(fileName.Replace(fileName.Substring(fileName.LastIndexOf('.') + 1), "csv")))
+                    File.Delete(fileName.Replace(fileName.Substring(fileName.LastIndexOf('.') + 1), "csv"));
+                ZipFile.ExtractToDirectory($"./{fileName}", "./");
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("extracting exc msg: "  + ex.Message);
         }
     }
 
 
-    private static List<InternClass> GettingDataCSV(string url)
+    private static List<InternClass> GettingDataCSV(string url, string fileName)
     {
         try
         {
             //Waiting for file to be downloaded.
-            Task.WaitAll(DownloadFile(url, "interns" + url.Substring(url.IndexOf(".", url.Length - 5))));
-
+            Task.WaitAll(DownloadFile(url, fileName));
+            
             var internsList = new List<InternClass>();
 
             var csvFileDescription = new CsvFileDescription
@@ -219,7 +259,6 @@ class Program
 
             //Parsing data into objects.
             var JSONData = JObject.Parse(data);
-            //string person = (string)JSONData["interns"][2]["name"];
 
             //Using LINQ to operate on objects.
             var JSONObjects =
